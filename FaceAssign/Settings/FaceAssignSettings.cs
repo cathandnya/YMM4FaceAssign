@@ -40,7 +40,33 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
     /// </summary>
     public string ModelName { get; set; } = "qwen/qwen3-4b";
 
+    /// <summary>実行時に使う生のキー。ファイルには書かない。</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Newtonsoft.Json.JsonIgnore]
     public string ApiKey { get; set; } = "";
+
+    /// <summary>DPAPI で暗号化したキー。ファイルに残るのはこちらだけ。</summary>
+    public string ProtectedApiKey
+    {
+        get => DpapiSecret.Protect(ApiKey);
+        set => ApiKey = DpapiSecret.Unprotect(value);
+    }
+
+    /// <summary>
+    /// 平文で保存していた頃の設定ファイルからの移行用。
+    /// 読み込み時に拾って、次の保存で暗号化された側へ移す。書き出しは常に空。
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ApiKey")]
+    [Newtonsoft.Json.JsonProperty("ApiKey")]
+    public string LegacyApiKey
+    {
+        get => "";
+        set
+        {
+            if (!string.IsNullOrEmpty(value))
+                ApiKey = value;
+        }
+    }
 
     public double Temperature { get; set; }
 
