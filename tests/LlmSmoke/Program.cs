@@ -218,6 +218,38 @@ else if (mode == "small")
         Console.WriteLine();
     }
 }
+else if (mode == "url")
+{
+    // ネットワーク不要。エンドポイントURLの組み立てだけ確認する。
+    var cases = new (string Input, string ExpectedChat)[]
+    {
+        ("http://127.0.0.1:1234",     "http://127.0.0.1:1234/v1/chat/completions"),
+        ("http://127.0.0.1:1234/",    "http://127.0.0.1:1234/v1/chat/completions"),
+        ("http://127.0.0.1:1234/v1",  "http://127.0.0.1:1234/v1/chat/completions"),
+        ("http://127.0.0.1:1234/v1/", "http://127.0.0.1:1234/v1/chat/completions"),
+        ("http://127.0.0.1:11434",    "http://127.0.0.1:11434/v1/chat/completions"),
+        ("https://api.openai.com/v1", "https://api.openai.com/v1/chat/completions"),
+        ("https://generativelanguage.googleapis.com/v1beta/openai/",
+         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"),
+        ("https://example.com/proxy/llm",
+         "https://example.com/proxy/llm/chat/completions"),
+    };
+
+    var failures = 0;
+    foreach (var (input, expected) in cases)
+    {
+        var actual = new LlmEndpoint(input, "m").ResolveChatCompletionsUrl();
+        var ok = actual == expected;
+        if (!ok) failures++;
+        Console.WriteLine($"  [{(ok ? "PASS" : "FAIL")}] {input}");
+        if (!ok)
+        {
+            Console.WriteLine($"          期待 {expected}");
+            Console.WriteLine($"          実際 {actual}");
+        }
+    }
+    Console.WriteLine(failures == 0 ? "すべて PASS" : $"{failures} 件 FAIL");
+}
 else if (mode == "scale")
 {
     // 24行 / チャンク20 で2分割させ、ID の取りこぼしと重複を見る。

@@ -12,16 +12,23 @@ public sealed record LlmEndpoint(
     bool IncludeReason = true)
 {
     /// <summary>
-    /// ユーザーは "http://127.0.0.1:1234" とも "http://127.0.0.1:1234/v1" とも貼るので、
-    /// 末尾を正規化して /v1 を一度だけ付ける。
+    /// ユーザーは "http://127.0.0.1:1234" とも "http://127.0.0.1:1234/v1" とも貼る。
+    /// ホストだけの URL のときに限って /v1 を足す。
+    ///
+    /// Gemini の https://generativelanguage.googleapis.com/v1beta/openai のように
+    /// 既にパスを持つ互換エンドポイントもあるので、パスがあればそのまま使う。
     /// </summary>
     public string ResolveChatCompletionsUrl() => $"{NormalizeBase()}/chat/completions";
 
     public string ResolveModelsUrl() => $"{NormalizeBase()}/models";
 
-    private string NormalizeBase()
+    internal string NormalizeBase()
     {
         var b = BaseUrl.Trim().TrimEnd('/');
+
+        if (Uri.TryCreate(b, UriKind.Absolute, out var uri))
+            return uri.AbsolutePath.Trim('/').Length == 0 ? b + "/v1" : b;
+
         return b.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) ? b : b + "/v1";
     }
 }
