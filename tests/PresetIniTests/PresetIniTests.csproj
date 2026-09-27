@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PresetIniTests</RootNamespace>
+  </PropertyGroup>
+  <!-- YMM4 に依存しない純粋な部分だけをリンクしてテストする -->
+  <ItemGroup>
+    <Compile Include="..\..\FaceAssign\Tachie\TachiePartTables.cs" Link="Tachie\TachiePartTables.cs" />
+    <Compile Include="..\..\FaceAssign\Tachie\PresetDefinition.cs" Link="Tachie\PresetDefinition.cs" />
+    <Compile Include="..\..\FaceAssign\Tachie\PresetIniReader.cs" Link="Tachie\PresetIniReader.cs" />
+    <Compile Include="..\..\FaceAssign\Tachie\RecommendedPresetNames.cs" Link="Tachie\RecommendedPresetNames.cs" />
+    <Compile Include="..\..\FaceAssign\Tachie\FaceSlotAccessor.cs" Link="Tachie\FaceSlotAccessor.cs" />
+    <Compile Include="..\..\FaceAssign\Tachie\FaceParameterWriter.cs" Link="Tachie\FaceParameterWriter.cs" />
+  </ItemGroup>
+</Project>

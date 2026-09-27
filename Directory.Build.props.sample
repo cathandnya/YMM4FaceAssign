@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Path to the YMM4 install folder. Trailing backslash is required. -->
+    <YMM4DirPath>C:\ymm4\YukkuriMovieMaker_v4_Lite\</YMM4DirPath>
+  </PropertyGroup>
+</Project>

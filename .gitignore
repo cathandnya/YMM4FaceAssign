@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+*.user
+
+# YMM4 のインストール先はマシンごとに違うので、雛形だけ置く
+Directory.Build.props

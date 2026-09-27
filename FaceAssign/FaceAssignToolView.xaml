@@ -1,0 +1,177 @@
+﻿<UserControl x:Class="FaceAssign.FaceAssignToolView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:FaceAssign"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance Type=local:FaceAssignToolViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,4" />
+        </Style>
+        <Style x:Key="Field" TargetType="TextBox">
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,10,0,4" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="200" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,6"
+                   Text="実行はタイムラインの右クリックメニューから行います。ボイスアイテムを選んで「セリフから表情を推定して適用」。" />
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="設定">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="接続先" Style="{StaticResource Section}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="エンドポイント" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="1" Grid.Column="1" Text="{Binding Config.BaseUrl}" Style="{StaticResource Field}"
+                                   ToolTip="OpenAI互換のURL。LM Studio は http://127.0.0.1:1234、Ollama は http://127.0.0.1:11434" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="モデル名" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="2" Grid.Column="1" Text="{Binding Config.ModelName}" Style="{StaticResource Field}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="APIキー" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="3" Grid.Column="1" Text="{Binding Config.ApiKey}" Style="{StaticResource Field}"
+                                   ToolTip="ローカルサーバでは空で構いません" />
+
+                        <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="速度と品質" Style="{StaticResource Section}" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="1回あたりの行数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="5" Grid.Column="1" Text="{Binding Config.MaxLinesPerRequest}" Style="{StaticResource Field}"
+                                   ToolTip="多すぎるとモデルが後半を落とします。取りこぼしは自動で聞き直します。" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="文脈に使う行数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="6" Grid.Column="1" Text="{Binding Config.ContextLineCount}" Style="{StaticResource Field}"
+                                   ToolTip="対象の手前を何行、文脈として送るか。増やすと遅くなります。" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="並列リクエスト数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="7" Grid.Column="1" Text="{Binding Config.Parallelism}" Style="{StaticResource Field}"
+                                   ToolTip="LM Studio は 2 が速く、3以上は頭打ち。Ollama は 1 のままにしてください。" />
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="タイムアウト(秒)" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="8" Grid.Column="1" Text="{Binding Config.TimeoutSeconds}" Style="{StaticResource Field}" />
+
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="reasoning_effort" Style="{StaticResource Caption}" />
+                        <ComboBox  Grid.Row="9" Grid.Column="1" Text="{Binding Config.ReasoningEffort}" IsEditable="True" Margin="0,0,0,4"
+                                   ToolTip="gpt-oss 系で効きます。medium は low の約2倍遅くなります。空欄で指定なし。">
+                            <ComboBoxItem Content="low" />
+                            <ComboBoxItem Content="medium" />
+                            <ComboBoxItem Content="high" />
+                        </ComboBox>
+
+                        <CheckBox Grid.Row="10" Grid.Column="1" Content="/no_think を付ける (Qwen3系の thinking を抑える)"
+                                  IsChecked="{Binding Config.AppendNoThinkHint}" Margin="0,2,0,2" />
+                        <CheckBox Grid.Row="11" Grid.Column="1" Content="判断理由を出させる (25〜40% 遅くなる)"
+                                  IsChecked="{Binding IncludeReason}" Margin="0,2,0,2" />
+
+                        <TextBlock Grid.Row="12" Grid.ColumnSpan="2" Text="書き込み先" Style="{StaticResource Section}" />
+
+                        <StackPanel Grid.Row="13" Grid.Column="1">
+                            <RadioButton Content="ボイスアイテムの表情を上書き" IsChecked="{Binding IsOverwriteVoiceItem}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <RadioButton Content="表情アイテムを挿入 (レイヤー +" IsChecked="{Binding IsInsertTachieFaceItem}"
+                                             VerticalAlignment="Center" />
+                                <TextBox Text="{Binding LayerOffset}" Width="36" Margin="2,0,0,0" VerticalAlignment="Center" />
+                                <TextBlock Text=")" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <CheckBox Content="未指定パーツを維持する (非推奨)" IsChecked="{Binding KeepUnspecifiedParts}" Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="14" Grid.ColumnSpan="2" Text="作品の方針" Style="{StaticResource Section}" />
+                        <TextBox   Grid.Row="15" Grid.ColumnSpan="2" Text="{Binding Policy, UpdateSourceTrigger=PropertyChanged}"
+                                   AcceptsReturn="True" TextWrapping="Wrap" MinHeight="46" VerticalScrollBarVisibility="Auto"
+                                   ToolTip="例: 基本は標準、強調したいところだけ得意顔にする" />
+
+                        <WrapPanel Grid.Row="16" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                            <Button Content="設定を保存" Command="{Binding SaveSettingsCommand}" Padding="10,3" Margin="0,0,6,0" />
+                            <Button Content="接続テスト" Command="{Binding TestConnectionCommand}" Padding="10,3" />
+                        </WrapPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="プリセット">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <WrapPanel Grid.Row="0" Margin="0,2,0,4">
+                        <Button Content="プリセット再読込" Command="{Binding ScanCommand}" Padding="8,2" Margin="0,0,4,0"
+                                ToolTip="preset.ini を編集した後に押します。実行時には自動で読み込まれます。" />
+                        <Button Content="推奨名をコピー" Command="{Binding CopyRecommendedNamesCommand}" Padding="8,2" Margin="0,0,4,0" />
+                        <Button Content="preset.ini を開く" Command="{Binding OpenPresetFolderCommand}" Padding="8,2" />
+                    </WrapPanel>
+
+                    <ComboBox Grid.Row="1" ItemsSource="{Binding Characters}" SelectedItem="{Binding SelectedCharacter}"
+                              DisplayMemberPath="CharacterName" Margin="0,0,0,4" />
+
+                    <TextBox Grid.Row="2" Text="{Binding Diagnostics, Mode=OneWay}" IsReadOnly="True"
+                             BorderThickness="0" Background="Transparent" MaxHeight="90"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding SelectedCharacter.Rows}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal" Margin="0,4,0,0">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="候補" Binding="{Binding IsCandidate, UpdateSourceTrigger=PropertyChanged}" Width="44" />
+                            <DataGridTextColumn Header="プリセット名" Binding="{Binding Label}" IsReadOnly="True" Width="110" />
+                            <DataGridTextColumn Header="補足 (任意)" Binding="{Binding Hint, UpdateSourceTrigger=PropertyChanged}" Width="150" />
+                            <DataGridTextColumn Header="警告" Binding="{Binding Warning}" IsReadOnly="True" Width="90" />
+                            <DataGridTextColumn Header="パーツ内容" Binding="{Binding PartsSummary}" IsReadOnly="True" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="ログ">
+                <Grid Margin="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,2,0,4">
+                        <Button Content="中止" Command="{Binding CancelCommand}" DockPanel.Dock="Right" Padding="8,2" Margin="6,0,0,0" />
+                        <TextBlock Text="{Binding ProgressText}" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        <ProgressBar Value="{Binding ProgressRate, Mode=OneWay}" Maximum="1" Height="6" />
+                    </DockPanel>
+
+                    <TextBox Grid.Row="1" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
+                             VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

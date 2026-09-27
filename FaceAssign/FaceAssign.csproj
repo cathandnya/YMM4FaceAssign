@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="YukkuriMovieMaker.Plugin">
+      <HintPath>$(YMM4DirPath)YukkuriMovieMaker.Plugin.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="YukkuriMovieMaker">
+      <HintPath>$(YMM4DirPath)YukkuriMovieMaker.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="YukkuriMovieMaker.Controls">
+      <HintPath>$(YMM4DirPath)YukkuriMovieMaker.Controls.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(YMM4DirPath)Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    Copy the built DLL into the YMM4 plugin folder.
+    YMM4 holds the DLL open while it runs, so Retries="0" fails fast with a single warning
+    instead of spending 10 seconds retrying. Restart YMM4 to pick up a new build.
+  -->
+  <Target Name="CopyToYMM4" AfterTargets="Build">
+    <MakeDir Directories="$(YMM4DirPath)user\plugin\$(ProjectName)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(YMM4DirPath)user\plugin\$(ProjectName)\"
+          Retries="0" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>
