@@ -4,8 +4,7 @@ README から参照します。追加したら README 側のコメントを外�
 
 | ファイル名 | 内容 |
 | --- | --- |
-| `01-lmstudio-server.png` | LM Studio のサーバ起動画面 |
-| `02-tool-menu.png` | YMM4 のツールメニュー |
-| `03-settings.png` | パネルの設定タブ |
-| `04-presets.png` | パネルのプリセットタブ (診断と候補チェック) |
-| `05-context-menu.png` | タイムラインの右クリックメニュー |
+| `01-tool-menu.png` | YMM4 のツールメニュー |
+| `02-settings.png` | パネルの設定タブ |
+| `03-presets.png` | パネルのプリセットタブ (診断と候補チェック) |
+| `04-context-menu.png` | タイムラインの右クリックメニュー |
