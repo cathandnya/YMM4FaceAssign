@@ -110,6 +110,9 @@ internal sealed class ProgressOverlay
     /// Hide ではなく Close する。WPF は既定で最後のウィンドウが閉じたら終了するため、
     /// 隠したまま持ち続けると YMM4 が終了できなくなる。
     /// </summary>
+    /// <summary>結果を別の形で見せるときに、進捗表示だけ消す。</summary>
+    public static void Dismiss() => OnUi(() => current?.Close());
+
     private void Close()
     {
         closeTimer.Stop();

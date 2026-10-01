@@ -23,6 +23,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
     private double progressRate;
     private bool isProcessing;
     private DateTime lastWarmUp = DateTime.MinValue;
+    private LlmPreset? selectedConnectionPreset;
     private string? lastFailure;
 
     public FaceAssignToolViewModel()
@@ -43,6 +44,28 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
     /// <summary>パネルから設定を直接編集するためのバインド先。</summary>
     public FaceAssignSettings Config => FaceAssignSettings.Default;
+
+    /// <summary>接続先の雛形。</summary>
+    public IReadOnlyList<LlmPreset> ConnectionPresets => LlmPreset.All;
+
+    /// <summary>
+    /// 雛形を選ぶとエンドポイントとモデル名が入る。選んだ後に手で直してよいので、
+    /// 選択状態そのものは保存しない。
+    /// </summary>
+    public LlmPreset? SelectedConnectionPreset
+    {
+        get => selectedConnectionPreset;
+        set
+        {
+            if (!Set(ref selectedConnectionPreset, value) || value is null)
+                return;
+
+            Settings.BaseUrl = value.BaseUrl;
+            Settings.ModelName = value.ModelName;
+            Settings.ReasoningEffort = value.ReasoningEffort;
+            Append($"{value.Name} の設定を入れました。{value.Note}");
+        }
+    }
 
     public ObservableCollection<CharacterPresetsViewModel> Characters { get; } = [];
 
@@ -92,9 +115,13 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             if (!Set(ref isProcessing, value))
                 return;
             OnPropertyChanged(nameof(CanSuspend));
+            OnPropertyChanged(nameof(TestConnectionLabel));
             RaiseCommandStates();
         }
     }
+
+    /// <summary>実行中だと分かるようにボタンの文字を変える。</summary>
+    public string TestConnectionLabel => IsProcessing ? "確認中…" : "接続テスト";
 
     public bool IsOverwriteVoiceItem
     {
@@ -496,12 +523,22 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
     private async Task TestConnectionAsync()
     {
+        // ボタンは IsProcessing で無効になるが、取りこぼしても二重に走らせない。
+        if (IsProcessing)
+            return;
+
         IsProcessing = true;
+
+        // 結果はログタブに出るが、設定タブを見ていると気づけない。オーバーレイでも知らせる。
+        ProgressOverlay.Begin("接続を確認しています…");
+
         try
         {
-            var endpoint = Settings.CreateEndpoint();
+            // 疎通確認に本番のタイムアウト(既定180秒)を使うと、失敗したことが長らく分からない。
+            var endpoint = Settings.CreateEndpoint() with { TimeoutSeconds = 20 };
             using var client = new OpenAiCompatibleClient(endpoint);
             var models = await client.ListModelsAsync(CancellationToken.None);
+
             Append($"接続できました ({endpoint.ResolveModelsUrl()})。モデル {models.Count} 件: {string.Join(", ", models.Take(8))}");
 
             if (string.IsNullOrWhiteSpace(Settings.ModelName) && models.Count > 0)
@@ -509,20 +546,44 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
                 Settings.ModelName = models[0];
                 Settings.Save();
                 Append($"モデル名が空だったので \"{models[0]}\" を設定しました。");
+                Notify($"接続できました。\n\nモデル名が空だったので \"{models[0]}\" を入れました。", false);
             }
             else if (!string.IsNullOrWhiteSpace(Settings.ModelName) && !models.Contains(Settings.ModelName))
             {
                 Append($"注意: 設定中のモデル \"{Settings.ModelName}\" が一覧にありません。");
+                Notify($"接続できました。\n\nただし設定中のモデル \"{Settings.ModelName}\" が一覧にありません。" +
+                       $"\n使えるモデル: {string.Join(", ", models.Take(12))}", true);
+            }
+            else
+            {
+                Notify($"接続できました。\n\nモデル {models.Count} 件: {string.Join(", ", models.Take(12))}", false);
             }
         }
         catch (Exception ex)
         {
-            Append($"接続できませんでした: {ex.Message}");
+            var reason = Innermost(ex).Message;
+            Append($"接続できませんでした: {reason}");
+            Notify($"接続できませんでした。\n\n{reason}\n\n接続先: {Settings.BaseUrl}", true);
         }
         finally
         {
             IsProcessing = false;
         }
+    }
+
+    /// <summary>接続テストの結果はパネルのウィンドウに返す。</summary>
+    private static void Notify(string message, bool isError)
+    {
+        ProgressOverlay.Dismiss();
+        PanelDialog.Show(message, "接続テスト", isError);
+    }
+
+    /// <summary>HttpRequestException は原因が内側に入るので、一番内側を見せる。</summary>
+    private static Exception Innermost(Exception ex)
+    {
+        while (ex.InnerException is not null)
+            ex = ex.InnerException;
+        return ex;
     }
 
     private void SaveSettings()

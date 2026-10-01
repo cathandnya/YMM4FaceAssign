@@ -19,20 +19,25 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
 
     public override object SettingView => null!;
 
-    public string BaseUrl { get; set; } = "http://127.0.0.1:1234";
+    private string baseUrl = "http://127.0.0.1:1234";
+    private string modelName = "qwen/qwen3-4b";
+    private string apiKey = "";
+    private string reasoningEffort = "low";
+
+    // 接続先の雛形を選んだときに欄へ反映させたいので、この4つは変更通知を出す。
+    public string BaseUrl { get => baseUrl; set => Set(ref baseUrl, value); }
 
     /// <summary>
     /// 既定は LM Studio の qwen3-4b。実測で 10行 2〜3秒と、gpt-oss-20b の7倍前後速い。
     /// そのぶん選択の質は落ちる (8行の手動採点で 6/8 → 4/8)。
-    /// 質を優先するなら openai/gpt-oss-20b に変える。
     /// 接続テスト時に未設定なら、一覧の先頭で自動補完する。
     /// </summary>
-    public string ModelName { get; set; } = "qwen/qwen3-4b";
+    public string ModelName { get => modelName; set => Set(ref modelName, value); }
 
     /// <summary>実行時に使う生のキー。ファイルには書かない。</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     [Newtonsoft.Json.JsonIgnore]
-    public string ApiKey { get; set; } = "";
+    public string ApiKey { get => apiKey; set => Set(ref apiKey, value); }
 
     /// <summary>DPAPI で暗号化したキー。ファイルに残るのはこちらだけ。</summary>
     public string ProtectedApiKey
@@ -77,7 +82,7 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
     /// gpt-oss 系の reasoning_effort。medium は low の約2倍遅かった (実測) ので既定は low。
     /// 対応していないサーバでは無視される。
     /// </summary>
-    public string ReasoningEffort { get; set; } = "low";
+    public string ReasoningEffort { get => reasoningEffort; set => Set(ref reasoningEffort, value); }
 
     /// <summary>
     /// 判断理由を出させるか。出力トークンが増えて全体の25〜40%ほど遅くなる (実測)。

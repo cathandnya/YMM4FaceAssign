@@ -46,55 +46,82 @@
                             <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="接続先" Style="{StaticResource Section}" />
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="エンドポイント" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="1" Grid.Column="1" Text="{Binding Config.BaseUrl}" Style="{StaticResource Field}"
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="サービス" Style="{StaticResource Caption}" />
+<Grid Grid.Row="1" Grid.Column="1" Margin="0,0,0,4">
+                            <ComboBox ItemsSource="{Binding ConnectionPresets}"
+                                      SelectedItem="{Binding SelectedConnectionPreset}"
+                                      ToolTip="選ぶとエンドポイントとモデル名が入ります。選んだ後に手で直して構いません。" />
+                            <!-- 未選択のときだけ、中身が空に見えないよう案内を重ねる -->
+                            <TextBlock Text="プリセットから選択" Margin="9,0,0,0" VerticalAlignment="Center"
+                                       IsHitTestVisible="False" Opacity="0.55">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedConnectionPreset}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="エンドポイント" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="2" Grid.Column="1" Text="{Binding Config.BaseUrl}" Style="{StaticResource Field}"
                                    ToolTip="OpenAI互換のURL。LM Studio は http://127.0.0.1:1234、Ollama は http://127.0.0.1:11434" />
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="モデル名" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="2" Grid.Column="1" Text="{Binding Config.ModelName}" Style="{StaticResource Field}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="モデル名" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="3" Grid.Column="1" Text="{Binding Config.ModelName}" Style="{StaticResource Field}" />
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="APIキー" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="3" Grid.Column="1" Text="{Binding Config.ApiKey}" Style="{StaticResource Field}"
-                                   ToolTip="ローカルサーバでは空で構いません" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="APIキー" Style="{StaticResource Caption}" />
+                        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="ApiKeyBox" Margin="0,0,0,4"
+                                     PasswordChanged="OnApiKeyChanged"
+                                     ToolTip="ローカルサーバでは空で構いません" />
 
-                        <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="速度と品質" Style="{StaticResource Section}" />
+                        <Button Grid.Row="5" Grid.Column="1" Content="{Binding TestConnectionLabel}" Command="{Binding TestConnectionCommand}"
+                                HorizontalAlignment="Left" Padding="10,3" Margin="0,2,0,4"
+                                ToolTip="つながるか確かめ、使えるモデルの一覧をログタブに出します。モデル名が空なら一覧の先頭を入れます。" />
 
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="1回あたりの行数" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="5" Grid.Column="1" Text="{Binding Config.MaxLinesPerRequest}" Style="{StaticResource Field}"
+                        <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="速度と品質" Style="{StaticResource Section}" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="1回あたりの行数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="7" Grid.Column="1" Text="{Binding Config.MaxLinesPerRequest}" Style="{StaticResource Field}"
                                    ToolTip="多すぎるとモデルが後半を落とします。取りこぼしは自動で聞き直します。" />
 
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="文脈に使う行数" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="6" Grid.Column="1" Text="{Binding Config.ContextLineCount}" Style="{StaticResource Field}"
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="文脈に使う行数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="8" Grid.Column="1" Text="{Binding Config.ContextLineCount}" Style="{StaticResource Field}"
                                    ToolTip="対象の手前を何行、文脈として送るか。増やすと遅くなります。" />
 
-                        <TextBlock Grid.Row="7" Grid.Column="0" Text="並列リクエスト数" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="7" Grid.Column="1" Text="{Binding Config.Parallelism}" Style="{StaticResource Field}"
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="並列リクエスト数" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="9" Grid.Column="1" Text="{Binding Config.Parallelism}" Style="{StaticResource Field}"
                                    ToolTip="LM Studio は 2 が速く、3以上は頭打ち。Ollama は 1 のままにしてください。" />
 
-                        <TextBlock Grid.Row="8" Grid.Column="0" Text="タイムアウト(秒)" Style="{StaticResource Caption}" />
-                        <TextBox   Grid.Row="8" Grid.Column="1" Text="{Binding Config.TimeoutSeconds}" Style="{StaticResource Field}" />
+                        <TextBlock Grid.Row="10" Grid.Column="0" Text="タイムアウト(秒)" Style="{StaticResource Caption}" />
+                        <TextBox   Grid.Row="10" Grid.Column="1" Text="{Binding Config.TimeoutSeconds}" Style="{StaticResource Field}" />
 
-                        <TextBlock Grid.Row="9" Grid.Column="0" Text="reasoning_effort" Style="{StaticResource Caption}" />
-                        <ComboBox  Grid.Row="9" Grid.Column="1" Text="{Binding Config.ReasoningEffort}" IsEditable="True" Margin="0,0,0,4"
+                        <TextBlock Grid.Row="11" Grid.Column="0" Text="reasoning_effort" Style="{StaticResource Caption}" />
+                        <ComboBox  Grid.Row="11" Grid.Column="1" Text="{Binding Config.ReasoningEffort}" IsEditable="True" Margin="0,0,0,4"
                                    ToolTip="gpt-oss 系で効きます。medium は low の約2倍遅くなります。空欄で指定なし。">
                             <ComboBoxItem Content="low" />
                             <ComboBoxItem Content="medium" />
                             <ComboBoxItem Content="high" />
                         </ComboBox>
 
-                        <CheckBox Grid.Row="10" Grid.Column="1" Content="/no_think を付ける (Qwen3系の thinking を抑える)"
+                        <CheckBox Grid.Row="12" Grid.Column="1" Content="/no_think を付ける (Qwen3系の thinking を抑える)"
                                   IsChecked="{Binding Config.AppendNoThinkHint}" Margin="0,2,0,2" />
-                        <CheckBox Grid.Row="11" Grid.Column="1" Content="判断理由を出させる (25〜40% 遅くなる)"
+                        <CheckBox Grid.Row="13" Grid.Column="1" Content="判断理由を出させる (25〜40% 遅くなる)"
                                   IsChecked="{Binding IncludeReason}" Margin="0,2,0,2" />
 
-                        <TextBlock Grid.Row="12" Grid.ColumnSpan="2" Text="書き込み先" Style="{StaticResource Section}" />
+                        <TextBlock Grid.Row="14" Grid.ColumnSpan="2" Text="書き込み先" Style="{StaticResource Section}" />
 
-                        <StackPanel Grid.Row="13" Grid.Column="1">
+                        <StackPanel Grid.Row="15" Grid.Column="1">
                             <RadioButton Content="ボイスアイテムの表情を上書き" IsChecked="{Binding IsOverwriteVoiceItem}" />
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                 <RadioButton Content="表情アイテムを挿入 (レイヤー +" IsChecked="{Binding IsInsertTachieFaceItem}"
@@ -105,14 +132,13 @@
                             <CheckBox Content="未指定パーツを維持する (非推奨)" IsChecked="{Binding KeepUnspecifiedParts}" Margin="0,2,0,0" />
                         </StackPanel>
 
-                        <TextBlock Grid.Row="14" Grid.ColumnSpan="2" Text="追加のシステムプロンプト" Style="{StaticResource Section}" />
-                        <TextBox   Grid.Row="15" Grid.ColumnSpan="2" Text="{Binding Policy, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBlock Grid.Row="16" Grid.ColumnSpan="2" Text="追加のシステムプロンプト" Style="{StaticResource Section}" />
+                        <TextBox   Grid.Row="17" Grid.ColumnSpan="2" Text="{Binding Policy, UpdateSourceTrigger=PropertyChanged}"
                                    AcceptsReturn="True" TextWrapping="Wrap" MinHeight="46" VerticalScrollBarVisibility="Auto"
                                    ToolTip="システムプロンプトに追記されます。全プロジェクト共通。&#10;例: 基本は標準。強調したい場面だけ表情を変える" />
 
-                        <WrapPanel Grid.Row="16" Grid.ColumnSpan="2" Margin="0,10,0,0">
-                            <Button Content="設定を保存" Command="{Binding SaveSettingsCommand}" Padding="10,3" Margin="0,0,6,0" />
-                            <Button Content="接続テスト" Command="{Binding TestConnectionCommand}" Padding="10,3" />
+                        <WrapPanel Grid.Row="18" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                            <Button Content="設定を保存" Command="{Binding SaveSettingsCommand}" Padding="10,3" />
                         </WrapPanel>
 
                     </Grid>
