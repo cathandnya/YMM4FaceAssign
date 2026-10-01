@@ -91,10 +91,14 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
     public bool IncludeReason { get; set; }
 
     /// <summary>
-    /// 同時に投げるリクエスト数。LM Studio は 2 で約16%速くなり3以上は頭打ち、
-    /// Ollama は 2 以上にするとむしろ遅くなった (実測)。Ollama を使うときは 1 に戻すこと。
+    /// 同時に投げるリクエスト数。
+    ///
+    /// 既定は 1。増やして速くなるかはモデルとサーバ次第で、外すと大きく損をする。
+    /// 実測では LM Studio + gpt-oss-20b が 2 で約16%速くなった一方、
+    /// 同じ LM Studio でも qwen3-4b は 2 にすると 26秒が 535秒になった (タイムアウト多発)。
+    /// Ollama も 2 以上で遅くなる。増やすなら実際に測ってからにすること。
     /// </summary>
-    public int Parallelism { get; set; } = 2;
+    public int Parallelism { get; set; } = 1;
 
     public FaceWriteTarget WriteTarget { get; set; } = FaceWriteTarget.OverwriteVoiceItem;
 

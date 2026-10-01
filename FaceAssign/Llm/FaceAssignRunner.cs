@@ -238,9 +238,6 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         }
     }
 
-    /// <summary>対象どうしがこれ以上離れていたら、別のリクエストに分ける。</summary>
-    private const int SplitGap = 12;
-
     /// <summary>対象と対象の間に残す他キャラのセリフの数。</summary>
     private const int BridgeLines = 1;
 
@@ -250,8 +247,8 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
     /// 対象と対象の間にある他キャラのセリフは、直前の BridgeLines 行だけ残す。
     /// 全部入れると、交互に喋るタイムラインで 12行の束が 38行に膨らんで遅くなる (実測)。
     ///
-    /// 束を分ける判断は contextLines とは切り離してある。両方を兼ねていたころは、
-    /// 文脈を 2 に減らすと 3行おきの話者が全部別リクエストになり 24回投げていた。
+    /// 対象がどれだけ離れていても束は分けない。間に残すのが1行だけなので、
+    /// 離れていても送る量は増えないし、分けるとリクエスト回数が増えるだけで損をする。
     /// </summary>
     internal static IReadOnlyList<IReadOnlyList<TranscriptLine>> Chunk(
         IReadOnlyList<TranscriptLine> transcript,
@@ -272,9 +269,8 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         foreach (var index in targetIndices)
         {
             var last = groups.Count > 0 ? groups[^1] : null;
-            var tooFar = last is not null && index - last[^1] > SplitGap;
 
-            if (last is null || tooFar || last.Count >= maxTargets)
+            if (last is null || last.Count >= maxTargets)
                 groups.Add([index]);
             else
                 last.Add(index);

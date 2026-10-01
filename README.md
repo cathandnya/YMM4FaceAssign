@@ -41,7 +41,7 @@ OpenAI互換のチャットAPIであれば何でも使えます。どれか1つ�
 | | エンドポイントの例 | 備考 |
 | --- | --- | --- |
 | LM Studio | `http://127.0.0.1:1234` | サーバ機能を有効にしておく |
-| Ollama | `http://127.0.0.1:11434` | 並列リクエスト数は 1 にする |
+| Ollama | `http://127.0.0.1:11434` | |
 | OpenAI | `https://api.openai.com/v1` | APIキーが必要 |
 | Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | APIキーが必要。モデル名は `models/gemini-3.8-flash` のように `models/` から始まる。`reasoning_effort` は空に |
 
@@ -154,7 +154,7 @@ Gemini は動作を確認済みです (`json_schema` も受け付けます)。Op
 | --- | --- |
 | 1回あたりの行数 | 多すぎるとモデルが後半を落とします。取りこぼしは自動で聞き直します |
 | 文脈に使う行数 | 対象の手前を何行、文脈として送るか。増やすと遅くなります |
-| 並列リクエスト数 | LM Studio は 2 が速く3以上は頭打ち。Ollama は 1 |
+| 並列リクエスト数 | 既定 1。増やして速くなるかはモデル次第で、合わないと桁違いに遅くなる (qwen3-4b で 26秒→535秒)。変えるなら実測してから |
 | reasoning_effort | gpt-oss 系で効きます。medium は low の約2倍遅い |
 | /no_think を付ける | Qwen3 系の thinking を抑えます |
 | 判断理由を出させる | 25〜40% 遅くなります。既定はオフ |

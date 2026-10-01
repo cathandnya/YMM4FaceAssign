@@ -300,7 +300,8 @@ else if (mode == "mixedrun")
             var id = 1;
             var forChar = timeline.Select(l => l.CharacterName == who ? l with { Id = id++ } : l with { Id = null }).ToArray();
             var sw = Stopwatch.StartNew();
-            var outcomes = await runner.RunAsync(forChar, candidates, null, 12, 4, null, CancellationToken.None, 2);
+            var par = int.TryParse(Environment.GetEnvironmentVariable("FACEASSIGN_PAR"), out var v) ? v : 2;
+            var outcomes = await runner.RunAsync(forChar, candidates, null, 12, 4, null, CancellationToken.None, par);
             sw.Stop();
             done += outcomes.Count(o => o.PresetLabel is not null);
             Console.WriteLine($"  {who,-8} {outcomes.Count,2}行  {sw.ElapsedMilliseconds,6} ms  決定 {outcomes.Count(o => o.PresetLabel is not null)}");
