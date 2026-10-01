@@ -4,7 +4,7 @@ using YukkuriMovieMaker.Commons;
 
 namespace FaceAssign.Tachie;
 
-/// <summary>診断パネルの1行。候補に含めるかと補足はユーザーが編集し、素材単位で保存される。</summary>
+/// <summary>プリセット一覧の1行。補足はユーザーが編集し、素材単位で保存される。</summary>
 public sealed class PresetRowViewModel(PresetDefinition preset, PresetChoice choice) : Bindable
 {
     public PresetDefinition Preset { get; } = preset;
@@ -16,18 +16,6 @@ public sealed class PresetRowViewModel(PresetDefinition preset, PresetChoice cho
     public string PartsSummary => Preset.PartsSummary;
 
     public bool IsRecommendedName => RecommendedPresetNames.IsRecommended(Preset.Name);
-
-    public bool IsCandidate
-    {
-        get => Choice.IsCandidate;
-        set
-        {
-            if (Choice.IsCandidate == value)
-                return;
-            Choice.IsCandidate = value;
-            OnPropertyChanged(nameof(IsCandidate));
-        }
-    }
 
     public string Hint
     {

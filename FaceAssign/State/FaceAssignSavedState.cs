@@ -16,6 +16,9 @@ public sealed class FaceAssignSavedState
 
     public bool KeepUnspecifiedParts { get; set; }
 
-    /// <summary>「基本はカメラ目線、強調時のみ指差し」のような、この動画全体の方針。</summary>
+    /// <summary>
+    /// 以前はここに作品の方針を保存していた。いまは全体設定へ移したので、
+    /// 既存プロジェクトから引き継ぐためだけに残している。
+    /// </summary>
     public string Policy { get; set; } = "";
 }

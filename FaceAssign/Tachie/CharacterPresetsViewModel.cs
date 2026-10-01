@@ -29,7 +29,8 @@ public sealed class CharacterPresetsViewModel : Bindable
 
     public string PresetPath => PresetIniReader.GetPresetPath(Directory);
 
-    public IReadOnlyList<PresetRowViewModel> Candidates => [.. Rows.Where(r => r.IsCandidate)];
+    /// <summary>LLM に渡す候補。絞り込みはせず、読み込んだプリセットを全部使う。</summary>
+    public IReadOnlyList<PresetRowViewModel> Candidates => [.. Rows];
 
     public static CharacterPresetsViewModel? TryCreate(Character character, FaceAssignSettings settings, out string? reason)
     {
@@ -65,19 +66,12 @@ public sealed class CharacterPresetsViewModel : Bindable
     {
         var stored = settings.GetChoices(Directory);
 
-        // 整備が済んでいれば推奨名に一致するものだけを候補にする。
-        // 一致がゼロのうちは全部を候補にしておかないと何も動かせないので、そのときは全部 ON。
-        var anyRecommended = Presets.Any(p => RecommendedPresetNames.IsRecommended(p.Name));
-
         Rows.Clear();
         foreach (var preset in Presets)
         {
             if (!stored.TryGetValue(preset.Label, out var choice))
             {
-                choice = new PresetChoice
-                {
-                    IsCandidate = !anyRecommended || RecommendedPresetNames.IsRecommended(preset.Name),
-                };
+                choice = new PresetChoice();
                 stored[preset.Label] = choice;
             }
 
@@ -93,7 +87,7 @@ public sealed class CharacterPresetsViewModel : Bindable
     {
         var lines = new List<string>();
         var matched = Presets.Count(p => RecommendedPresetNames.IsRecommended(p.Name));
-        lines.Add($"{CharacterName}: プリセット {Presets.Count} 件 / 推奨名一致 {matched} 件 / 候補 {Candidates.Count} 件");
+        lines.Add($"{CharacterName}: プリセット {Presets.Count} 件 / 推奨名一致 {matched} 件");
 
         var missingRequired = RecommendedPresetNames.Required.Where(n => Presets.All(p => p.Name != n)).ToArray();
         if (missingRequired.Length > 0)
@@ -109,7 +103,7 @@ public sealed class CharacterPresetsViewModel : Bindable
             lines.Add($"    参照先PNGが見つからないプリセット: {broken} 件");
 
         if (matched == 0)
-            lines.Add("    推奨名がひとつも無いため、暫定で全プリセットを候補にしています。名前を整えると精度が上がります。");
+            lines.Add("    推奨名に一致するプリセットがありません。名前を感情語に整えると精度が上がります。");
 
         Diagnostics = string.Join(Environment.NewLine, lines);
     }

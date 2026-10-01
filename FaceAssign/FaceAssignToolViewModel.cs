@@ -23,7 +23,6 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
     private string progressText = "";
     private double progressRate;
     private bool isProcessing;
-    private string policy = "";
     private CharacterPresetsViewModel? selectedCharacter;
     private DateTime lastWarmUp = DateTime.MinValue;
     private string? lastFailure;
@@ -91,7 +90,12 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
     public double ProgressRate { get => progressRate; private set => Set(ref progressRate, value); }
 
-    public string Policy { get => policy; set => Set(ref policy, value); }
+    /// <summary>システムプロンプトへの追記。全体設定なので右クリック実行でも効く。</summary>
+    public string Policy
+    {
+        get => Settings.Policy;
+        set { Settings.Policy = value ?? ""; OnPropertyChanged(nameof(Policy)); }
+    }
 
     public CharacterPresetsViewModel? SelectedCharacter
     {
@@ -163,7 +167,6 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             WriteTarget = Settings.WriteTarget,
             LayerOffset = Settings.LayerOffset,
             KeepUnspecifiedParts = Settings.KeepUnspecifiedParts,
-            Policy = Policy,
         };
 
         // 提案テーブルは生きた VoiceItem 参照を持つので保存できない。メモリだけに置く。
@@ -178,7 +181,10 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             Settings.WriteTarget = saved.WriteTarget;
             Settings.LayerOffset = saved.LayerOffset;
             Settings.KeepUnspecifiedParts = saved.KeepUnspecifiedParts;
-            Policy = saved.Policy;
+
+            // 以前はプロジェクトに保存していた。全体設定が空なら引き継ぐ。
+            if (!string.IsNullOrWhiteSpace(saved.Policy) && string.IsNullOrWhiteSpace(Settings.Policy))
+                Policy = saved.Policy;
             OnPropertyChanged(nameof(IsOverwriteVoiceItem));
             OnPropertyChanged(nameof(IsInsertTachieFaceItem));
             OnPropertyChanged(nameof(LayerOffset));
@@ -366,6 +372,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
         IsProcessing = true;
         Proposals.Clear();
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        ProgressOverlay.Begin("表情を推定しています…");
 
         try
         {
@@ -412,6 +419,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
                 {
                     ProgressText = $"{character.CharacterName} {p.Message}";
                     ProgressRate = p.TotalChunks == 0 ? 0 : (double)p.DoneChunks / p.TotalChunks;
+                    ProgressOverlay.Report(ProgressRate, $"{character.CharacterName}: {p.Message}");
                 });
 
                 var outcomes = await runner.RunAsync(
@@ -456,18 +464,25 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
             if (autoApply)
                 ApplyProposals();
+
+            ProgressOverlay.Finish(
+                lastFailure ?? $"{decided}/{Proposals.Count} 行に表情を割り当てました ({stopwatch.Elapsed.TotalSeconds:F1} 秒)",
+                lastFailure is not null);
         }
         catch (OperationCanceledException)
         {
             Fail("推定を中止しました。");
+            ProgressOverlay.Finish("中止しました", true);
         }
         catch (LlmException ex)
         {
             Fail($"推定に失敗しました: {ex.DetailedMessage}");
+            ProgressOverlay.Finish($"失敗: {ex.Message}", true);
         }
         catch (Exception ex)
         {
             Fail($"推定に失敗しました: {ex.GetType().Name}: {ex.Message}");
+            ProgressOverlay.Finish($"失敗: {ex.Message}", true);
         }
         finally
         {

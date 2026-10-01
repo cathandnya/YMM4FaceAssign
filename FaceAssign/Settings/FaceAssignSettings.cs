@@ -6,13 +6,11 @@ using YukkuriMovieMaker.Plugin;
 namespace FaceAssign.Settings;
 
 /// <summary>
-/// あるプリセットを LLM の候補に含めるかどうかと、名前だけで伝わらないときの補足。
-/// 素材に属する判断なので、プロジェクトではなく立ち絵ディレクトリ単位で覚える。
+/// 名前だけで意味が伝わらないプリセットに添える補足。
+/// 素材に属する情報なので、プロジェクトではなく立ち絵ディレクトリ単位で覚える。
 /// </summary>
 public sealed class PresetChoice
 {
-    public bool IsCandidate { get; set; } = true;
-
     public string Hint { get; set; } = "";
 }
 
@@ -108,7 +106,13 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
 
     public bool KeepUnspecifiedParts { get; set; }
 
-    /// <summary>立ち絵ディレクトリのパス → プリセットラベル → 候補設定。</summary>
+    /// <summary>
+    /// システムプロンプトに追記する自由文。候補の選び方に偏りを与えるためのもの。
+    /// プロジェクトごとではなく全体に効く。
+    /// </summary>
+    public string Policy { get; set; } = "";
+
+    /// <summary>立ち絵ディレクトリのパス → プリセットラベル → 補足。</summary>
     public Dictionary<string, Dictionary<string, PresetChoice>> PresetChoices { get; set; } = [];
 
     public override void Initialize()

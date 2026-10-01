@@ -105,10 +105,10 @@
                             <CheckBox Content="未指定パーツを維持する (非推奨)" IsChecked="{Binding KeepUnspecifiedParts}" Margin="0,2,0,0" />
                         </StackPanel>
 
-                        <TextBlock Grid.Row="14" Grid.ColumnSpan="2" Text="作品の方針" Style="{StaticResource Section}" />
+                        <TextBlock Grid.Row="14" Grid.ColumnSpan="2" Text="追加のシステムプロンプト" Style="{StaticResource Section}" />
                         <TextBox   Grid.Row="15" Grid.ColumnSpan="2" Text="{Binding Policy, UpdateSourceTrigger=PropertyChanged}"
                                    AcceptsReturn="True" TextWrapping="Wrap" MinHeight="46" VerticalScrollBarVisibility="Auto"
-                                   ToolTip="例: 基本は標準、強調したいところだけ得意顔にする" />
+                                   ToolTip="システムプロンプトに追記されます。全プロジェクト共通。&#10;例: 基本は標準。強調したい場面だけ表情を変える" />
 
                         <WrapPanel Grid.Row="16" Grid.ColumnSpan="2" Margin="0,10,0,0">
                             <Button Content="設定を保存" Command="{Binding SaveSettingsCommand}" Padding="10,3" Margin="0,0,6,0" />
@@ -145,7 +145,6 @@
                               CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal" Margin="0,4,0,0">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="候補" Binding="{Binding IsCandidate, UpdateSourceTrigger=PropertyChanged}" Width="44" />
                             <DataGridTextColumn Header="プリセット名" Binding="{Binding Label}" IsReadOnly="True" Width="110" />
                             <DataGridTextColumn Header="補足 (任意)" Binding="{Binding Hint, UpdateSourceTrigger=PropertyChanged}" Width="150" />
                             <DataGridTextColumn Header="警告" Binding="{Binding Warning}" IsReadOnly="True" Width="90" />
