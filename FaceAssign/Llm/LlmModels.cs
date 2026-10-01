@@ -37,7 +37,7 @@ public sealed record LlmEndpoint(
 public sealed record TranscriptLine(int? Id, string CharacterName, string Serif);
 
 /// <summary>LLM に見せるプリセット候補。</summary>
-public sealed record PresetCandidate(string Label, string? Hint = null);
+public sealed record PresetCandidate(string Label);
 
 /// <summary>LLM が返した1行分の割り当て。</summary>
 public sealed record FaceAssignment(int Id, string Preset, string Reason);

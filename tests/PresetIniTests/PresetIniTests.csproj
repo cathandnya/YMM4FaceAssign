@@ -11,7 +11,6 @@
     <Compile Include="..\..\FaceAssign\Tachie\TachiePartTables.cs" Link="Tachie\TachiePartTables.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\PresetDefinition.cs" Link="Tachie\PresetDefinition.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\PresetIniReader.cs" Link="Tachie\PresetIniReader.cs" />
-    <Compile Include="..\..\FaceAssign\Tachie\RecommendedPresetNames.cs" Link="Tachie\RecommendedPresetNames.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\FaceSlotAccessor.cs" Link="Tachie\FaceSlotAccessor.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\FaceParameterWriter.cs" Link="Tachie\FaceParameterWriter.cs" />
   </ItemGroup>

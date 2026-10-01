@@ -114,44 +114,9 @@
                             <Button Content="設定を保存" Command="{Binding SaveSettingsCommand}" Padding="10,3" Margin="0,0,6,0" />
                             <Button Content="接続テスト" Command="{Binding TestConnectionCommand}" Padding="10,3" />
                         </WrapPanel>
+
                     </Grid>
                 </ScrollViewer>
-            </TabItem>
-
-            <TabItem Header="プリセット">
-                <Grid Margin="4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <WrapPanel Grid.Row="0" Margin="0,2,0,4">
-                        <Button Content="プリセット再読込" Command="{Binding ScanCommand}" Padding="8,2" Margin="0,0,4,0"
-                                ToolTip="preset.ini を編集した後に押します。実行時には自動で読み込まれます。" />
-                        <Button Content="推奨名をコピー" Command="{Binding CopyRecommendedNamesCommand}" Padding="8,2" Margin="0,0,4,0" />
-                        <Button Content="preset.ini を開く" Command="{Binding OpenPresetFolderCommand}" Padding="8,2" />
-                    </WrapPanel>
-
-                    <ComboBox Grid.Row="1" ItemsSource="{Binding Characters}" SelectedItem="{Binding SelectedCharacter}"
-                              DisplayMemberPath="CharacterName" Margin="0,0,0,4" />
-
-                    <TextBox Grid.Row="2" Text="{Binding Diagnostics, Mode=OneWay}" IsReadOnly="True"
-                             BorderThickness="0" Background="Transparent" MaxHeight="90"
-                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
-
-                    <DataGrid Grid.Row="3" ItemsSource="{Binding SelectedCharacter.Rows}" AutoGenerateColumns="False"
-                              CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal" Margin="0,4,0,0">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="プリセット名" Binding="{Binding Label}" IsReadOnly="True" Width="110" />
-                            <DataGridTextColumn Header="補足 (任意)" Binding="{Binding Hint, UpdateSourceTrigger=PropertyChanged}" Width="150" />
-                            <DataGridTextColumn Header="警告" Binding="{Binding Warning}" IsReadOnly="True" Width="90" />
-                            <DataGridTextColumn Header="パーツ内容" Binding="{Binding PartsSummary}" IsReadOnly="True" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
             </TabItem>
 
             <TabItem Header="ログ">

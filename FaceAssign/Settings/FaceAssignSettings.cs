@@ -6,15 +6,6 @@ using YukkuriMovieMaker.Plugin;
 namespace FaceAssign.Settings;
 
 /// <summary>
-/// 名前だけで意味が伝わらないプリセットに添える補足。
-/// 素材に属する情報なので、プロジェクトではなく立ち絵ディレクトリ単位で覚える。
-/// </summary>
-public sealed class PresetChoice
-{
-    public string Hint { get; set; } = "";
-}
-
-/// <summary>
 /// user\setting\&lt;version&gt;\FaceAssign.Settings.FaceAssignSettings.json に保存される全体設定。
 /// </summary>
 public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
@@ -112,9 +103,6 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
     /// </summary>
     public string Policy { get; set; } = "";
 
-    /// <summary>立ち絵ディレクトリのパス → プリセットラベル → 補足。</summary>
-    public Dictionary<string, Dictionary<string, PresetChoice>> PresetChoices { get; set; } = [];
-
     public override void Initialize()
     {
     }
@@ -123,13 +111,4 @@ public class FaceAssignSettings : SettingsBase<FaceAssignSettings>
         new(BaseUrl, ModelName, string.IsNullOrWhiteSpace(ApiKey) ? null : ApiKey,
             Temperature, TimeoutSeconds, AppendNoThinkHint, ReasoningEffort, IncludeReason);
 
-    public Dictionary<string, PresetChoice> GetChoices(string tachieDirectory)
-    {
-        if (!PresetChoices.TryGetValue(tachieDirectory, out var choices))
-        {
-            choices = [];
-            PresetChoices[tachieDirectory] = choices;
-        }
-        return choices;
-    }
 }

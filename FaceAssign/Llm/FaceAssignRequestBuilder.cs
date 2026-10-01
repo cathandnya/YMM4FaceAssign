@@ -81,10 +81,7 @@ public static class FaceAssignRequestBuilder
 
         sb.AppendLine("表情の候補 (番号: 名前):");
         for (var i = 0; i < candidates.Count; i++)
-        {
-            var c = candidates[i];
-            sb.AppendLine(string.IsNullOrWhiteSpace(c.Hint) ? $"{i}: {c.Label}" : $"{i}: {c.Label} — {c.Hint!.Trim()}");
-        }
+            sb.AppendLine($"{i}: {candidates[i].Label}");
         sb.AppendLine($"{KeepIndex}: どの候補も合わない");
         sb.AppendLine();
         sb.AppendLine("入力の各行は [キャラクター名 #ID] セリフ の形式です。");

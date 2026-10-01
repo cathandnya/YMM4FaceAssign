@@ -19,22 +19,17 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
     private AsyncAwaitStatus? asyncAwaitStatus;
     private CancellationTokenSource? cancellation;
 
-    private string diagnostics = "(まだスキャンしていません)";
     private string progressText = "";
     private double progressRate;
     private bool isProcessing;
-    private CharacterPresetsViewModel? selectedCharacter;
     private DateTime lastWarmUp = DateTime.MinValue;
     private string? lastFailure;
 
     public FaceAssignToolViewModel()
     {
-        // 実行はタイムラインの右クリックメニューからのみ。パネルは設定と確認に徹する。
-        ScanCommand = new ActionCommand(_ => timeline is not null && !IsProcessing, _ => Scan());
+        // 実行はタイムラインの右クリックメニューからのみ。パネルは設定とログに徹する。
         CancelCommand = new ActionCommand(_ => IsProcessing, _ => cancellation?.Cancel());
         TestConnectionCommand = new ActionCommand(_ => !IsProcessing, async _ => await TestConnectionAsync());
-        CopyRecommendedNamesCommand = new ActionCommand(_ => true, _ => CopyRecommendedNames());
-        OpenPresetFolderCommand = new ActionCommand(_ => SelectedCharacter is not null, _ => OpenPresetFolder());
         SaveSettingsCommand = new ActionCommand(_ => true, _ => SaveSettings());
     }
 
@@ -53,15 +48,9 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
     public ObservableCollection<FaceAssignProposal> Proposals { get; } = [];
 
-    public ActionCommand ScanCommand { get; }
-
     public ActionCommand CancelCommand { get; }
 
     public ActionCommand TestConnectionCommand { get; }
-
-    public ActionCommand CopyRecommendedNamesCommand { get; }
-
-    public ActionCommand OpenPresetFolderCommand { get; }
 
     public ActionCommand SaveSettingsCommand { get; }
 
@@ -84,8 +73,6 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
         OnPropertyChanged(nameof(LogText));
     }
 
-    public string Diagnostics { get => diagnostics; private set => Set(ref diagnostics, value); }
-
     public string ProgressText { get => progressText; private set => Set(ref progressText, value); }
 
     public double ProgressRate { get => progressRate; private set => Set(ref progressRate, value); }
@@ -95,12 +82,6 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
     {
         get => Settings.Policy;
         set { Settings.Policy = value ?? ""; OnPropertyChanged(nameof(Policy)); }
-    }
-
-    public CharacterPresetsViewModel? SelectedCharacter
-    {
-        get => selectedCharacter;
-        set => Set(ref selectedCharacter, value);
     }
 
     public bool IsProcessing
@@ -154,8 +135,6 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
         Characters.Clear();
         Proposals.Clear();
-        SelectedCharacter = null;
-        Diagnostics = "(まだスキャンしていません)";
         Append($"タイムライン \"{info.Timeline.Name}\" を受け取りました。");
         RaiseCommandStates();
     }
@@ -220,12 +199,11 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
         Characters.Clear();
         Proposals.Clear();
-        SelectedCharacter = null;
 
         var skipped = new List<string>();
         foreach (var character in targets.Select(v => v.Character).OfType<Character>().Distinct())
         {
-            var vm = CharacterPresetsViewModel.TryCreate(character, Settings, out var reason);
+            var vm = CharacterPresetsViewModel.TryCreate(character, out var reason);
             if (vm is null)
             {
                 if (reason is not null)
@@ -235,11 +213,9 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             Characters.Add(vm);
         }
 
-        SelectedCharacter = Characters.FirstOrDefault();
-
-        var lines = Characters.Select(c => c.Diagnostics).ToList();
-        lines.AddRange(skipped);
-        Diagnostics = lines.Count > 0 ? string.Join(Environment.NewLine, lines) : "対象のキャラクターがありません。";
+        // 読めなかったキャラクターの理由だけ残す。正常時は黙っている。
+        foreach (var reason in skipped)
+            Append(reason);
 
         Append($"対象 {targets.Count} 件 / 動く立ち絵のキャラクター {Characters.Count} 件。");
 
@@ -424,7 +400,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
 
                 var outcomes = await runner.RunAsync(
                     transcript,
-                    [.. candidates.Select(c => c.ToCandidate())],
+                    candidates,
                     Policy,
                     Settings.MaxLinesPerRequest,
                     Settings.ContextLineCount,
@@ -433,7 +409,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
                     Settings.Parallelism);
 
                 var byLabel = character.Presets.ToDictionary(p => p.Label, StringComparer.Ordinal);
-                var choices = character.Candidates.Select(c => c.Preset).ToArray();
+                var choices = character.Presets;
 
                 foreach (var outcome in outcomes)
                 {
@@ -564,46 +540,10 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
         OnPropertyChanged(nameof(IsInsertTachieFaceItem));
     }
 
-    private void CopyRecommendedNames()
-    {
-        try
-        {
-            System.Windows.Clipboard.SetText(RecommendedPresetNames.ToClipboardText());
-            Append("推奨プリセット名をコピーしました。preset.ini のセクション名を整えてから、もう一度スキャンしてください。");
-        }
-        catch (Exception ex)
-        {
-            Append($"クリップボードにコピーできませんでした: {ex.Message}");
-        }
-    }
-
-    private void OpenPresetFolder()
-    {
-        var path = SelectedCharacter?.PresetPath;
-        if (path is null)
-            return;
-
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "explorer.exe",
-                Arguments = $"/select,\"{path}\"",
-                UseShellExecute = true,
-            });
-        }
-        catch (Exception ex)
-        {
-            Append($"フォルダを開けませんでした: {ex.Message}");
-        }
-    }
-
     private void RaiseCommandStates()
     {
-        ScanCommand.RaiseCanExecuteChanged();
         CancelCommand.RaiseCanExecuteChanged();
         TestConnectionCommand.RaiseCanExecuteChanged();
-        OpenPresetFolderCommand.RaiseCanExecuteChanged();
     }
 
     private void Fail(string message)
