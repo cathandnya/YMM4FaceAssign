@@ -37,8 +37,14 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         // 本番の前に小さなリクエストを1本通して、モデルのロードを済ませておく。
         // これをやらないと最初の束がロード待ちのままタイムアウトし、リトライも同じく待たされる。
         // 実測では、冷えた状態の最初の束が 255 秒、暖まっていれば 3.9 秒だった。
-        progress?.Report(new FaceAssignProgress(0, chunks.Count, "モデルを準備しています…"));
-        if (!await client.WarmUpAsync(ct).ConfigureAwait(false))
+        //
+        // ロード済みなら一瞬で返るので、待たされたときだけ知らせる。
+        // 無条件に出すと、手でロード済みでも「準備中」が表示されて紛らわしい。
+        var warmUp = client.WarmUpAsync(ct);
+        if (await Task.WhenAny(warmUp, Task.Delay(TimeSpan.FromSeconds(1), ct)).ConfigureAwait(false) != warmUp)
+            progress?.Report(new FaceAssignProgress(0, chunks.Count, "モデルを読み込んでいます… (初回は時間がかかります)"));
+
+        if (!await warmUp.ConfigureAwait(false))
             progress?.Report(new FaceAssignProgress(0, chunks.Count, "モデルの準備に失敗しました。そのまま続けます…"));
 
         var perChunk = new IReadOnlyList<FaceAssignOutcome>[chunks.Count];
