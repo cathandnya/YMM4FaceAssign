@@ -6,5 +6,4 @@ README から参照します。追加したら README 側のコメントを外�
 | --- | --- |
 | `01-tool-menu.png` | YMM4 のツールメニュー |
 | `02-settings.png` | パネルの設定タブ |
-| `03-presets.png` | パネルのプリセットタブ (診断と候補チェック) |
-| `04-context-menu.png` | タイムラインの右クリックメニュー |
+| `03-context-menu.png` | タイムラインの右クリックメニュー |
