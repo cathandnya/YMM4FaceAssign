@@ -37,8 +37,8 @@ public sealed record LlmPreset(
 
         new("Gemini",
             "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "gemini-2.5-flash",
+            "models/gemini-3.8-flash",
             "",
-            "APIキーが必要。reasoning_effort は受け付けないので空にする。"),
+            "APIキーが必要。モデル名は models/ から始まる。reasoning_effort は受け付けないので空にする。"),
     ];
 }

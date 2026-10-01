@@ -457,6 +457,10 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             stopwatch.Stop();
             var decided = Proposals.Count(p => p.Preset is not null);
             var warned = Proposals.Count(p => p.Warning is not null);
+
+            // 警告の中身を出さないと、失敗の理由がどこにも残らない。
+            foreach (var warning in Proposals.Select(p => p.Warning).OfType<string>().Distinct().Take(3))
+                Append($"警告: {warning}");
             var perLine = Proposals.Count == 0 ? 0 : stopwatch.ElapsedMilliseconds / Proposals.Count;
             Append($"推定が終わりました。{decided}/{Proposals.Count} 行に表情が決まりました" +
                    (warned > 0 ? $" (警告 {warned} 件)" : "") +

@@ -97,7 +97,8 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         }
         catch (LlmException ex)
         {
-            failure = ex.Message;
+            // サーバが何を拒否したかは応答本文にしか書かれていないことが多い。
+            failure = ex.DetailedMessage;
         }
         catch (HttpRequestException ex)
         {

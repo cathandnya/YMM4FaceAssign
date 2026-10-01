@@ -43,7 +43,7 @@ OpenAI互換のチャットAPIであれば何でも使えます。どれか1つ�
 | LM Studio | `http://127.0.0.1:1234` | サーバ機能を有効にしておく |
 | Ollama | `http://127.0.0.1:11434` | 並列リクエスト数は 1 にする |
 | OpenAI | `https://api.openai.com/v1` | APIキーが必要 |
-| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | APIキーが必要。`reasoning_effort` は空に |
+| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | APIキーが必要。モデル名は `models/gemini-3.8-flash` のように `models/` から始まる。`reasoning_effort` は空に |
 
 ローカルで動かせば台本は外に出ません。クラウドを使う場合は台本がそのサービスへ送られます。
 
@@ -130,7 +130,12 @@ APIキーは設定ファイルに平文では書きません。Windows の DPAPI
 同じ Windows ユーザーで動くプロセスからは復号できます。そこまでの保護が要るなら、
 キーを保存せず都度入力する運用にしてください。
 
-なお、クラウド側での動作は未確認です (手元にキーが無いため実際には試していません)。
+Gemini は動作を確認済みです (`json_schema` も受け付けます)。OpenAI と Claude は未確認なので、
+エンドポイントとモデル名が正しいかは接続テストと1行だけの実行で確かめてください。
+
+**接続テストが通っても、そのモデルが使えるとは限りません。** モデル一覧には提供が終了したものも
+含まれることがあり、実際に呼ぶまで分かりません (Gemini で `models/gemini-2.5-flash` が
+「新規ユーザーには提供されていない」と返ってきました)。失敗の理由はログタブに出ます。
 
 ### 実行する
 
