@@ -14,10 +14,12 @@ internal static class FaceAssignLog
     private static readonly LinkedList<string> Lines = new();
 
     /// <summary>
-    /// ファイルにも落とすか。パネルのログタブに同じ内容が出るので既定はオフ。
-    /// パネルを開けない状況を調べるときだけ true にする。
+    /// ファイルにも落とすか。パネルを開いていない状態の記録が要るので既定でオン。
+    /// 肥大しないよう、一定の大きさを超えたら作り直す。
     /// </summary>
-    public static bool IsEnabled { get; set; }
+    public static bool IsEnabled { get; set; } = true;
+
+    private const long MaxFileBytes = 1024 * 1024;
 
     /// <summary>
     /// パネルが開いているときだけ、そこへ通知する。
@@ -51,7 +53,13 @@ internal static class FaceAssignLog
             try
             {
                 lock (Gate)
+                {
+                    var info = new FileInfo(Path);
+                    if (info.Exists && info.Length > MaxFileBytes)
+                        File.Delete(Path);
+
                     File.AppendAllText(Path, line + Environment.NewLine);
+                }
             }
             catch
             {

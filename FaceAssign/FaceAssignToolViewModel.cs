@@ -330,14 +330,43 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
     }
 
     /// <summary>対象にできるボイスアイテムがあるか。右クリックメニューの有効/無効に使う。</summary>
-    public bool HasTargets()
-    {
-        if (timeline is null || IsProcessing)
-            return false;
+    public bool HasTargets() => Inspect().CanRun;
 
-        return timeline.SelectedItems
-            .OfType<VoiceItem>()
-            .Any(v => v.Character is not null && TachieCharacterProbe.IsAnimationTachie(v.Character));
+    /// <summary>
+    /// なぜ実行できないのかを言葉にして返す。
+    /// 「無効になっているが理由が分からない」を避けるため、判定と説明を1か所にまとめている。
+    /// </summary>
+    public (bool CanRun, string Reason) Inspect()
+    {
+        if (timeline is null)
+            return (false, "タイムラインを受け取れていません。パネルを開き直してください。");
+
+        if (IsProcessing)
+            return (false, "実行中です。終わるまで待ってください。");
+
+        var voices = timeline.SelectedItems.OfType<VoiceItem>().ToArray();
+        if (voices.Length == 0)
+        {
+            var selected = timeline.SelectedItems.Count;
+            return (false, selected == 0
+                ? "アイテムが選択されていません。ボイスアイテムを選んでください。"
+                : $"選択中の {selected} 件にボイスアイテムがありません。");
+        }
+
+        var usable = voices.Where(v => v.Character is not null && TachieCharacterProbe.IsAnimationTachie(v.Character)).ToArray();
+        if (usable.Length == 0)
+        {
+            var detail = string.Join(", ", voices
+                .Select(v => $"{v.CharacterName}: {v.Character?.TachieType?.Name ?? "立ち絵なし"}")
+                .Distinct()
+                .Take(3));
+            return (false, $"動く立ち絵のキャラクターがありません ({detail})。このプラグインは動く立ち絵専用です。");
+        }
+
+        var skipped = voices.Length - usable.Length;
+        return (true, skipped > 0
+            ? $"{usable.Length} 件が対象です ({skipped} 件は動く立ち絵でないので飛ばします)。"
+            : $"{usable.Length} 件が対象です。");
     }
 
     private async Task EstimateAsync(bool autoApply)

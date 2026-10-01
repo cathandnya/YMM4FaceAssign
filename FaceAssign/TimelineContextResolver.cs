@@ -17,8 +17,10 @@ internal static class TimelineContextResolver
     private const BindingFlags Members =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-    public static TimelineToolInfo? Resolve(IEnumerable<object> dataContexts)
+    public static TimelineToolInfo? Resolve(IEnumerable<object> source)
     {
+        var dataContexts = source.ToArray();
+
         Timeline? timeline = null;
         Scenes? scenes = null;
         UndoRedoManager? undoRedoManager = null;
@@ -56,8 +58,9 @@ internal static class TimelineContextResolver
         if (timeline is null || undoRedoManager is null || asyncAwaitStatus is null)
         {
             FaceAssignLog.Write(
-                $"resolve failed: timeline={timeline is not null} scenes={scenes is not null} " +
-                $"undo={undoRedoManager is not null} async={asyncAwaitStatus is not null}");
+                $"タイムラインの解決に失敗: timeline={timeline is not null} scenes={scenes is not null} " +
+                $"undo={undoRedoManager is not null} async={asyncAwaitStatus is not null} " +
+                $"/ 見た DataContext: {string.Join(" | ", dataContexts.Select(c => c.GetType().FullName).Distinct().Take(8))}");
             return null;
         }
 

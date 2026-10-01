@@ -143,12 +143,20 @@ internal static class TimelineContextMenuHook
                 menu.Items.Insert(1, new Separator { Tag = MarkerTag });
         }
 
-        var enabled = GetOrCreateViewModel(menu)?.HasTargets() ?? false;
+        var viewModel = GetOrCreateViewModel(menu);
+        var (canRun, reason) = viewModel?.Inspect()
+            ?? (false, "タイムラインを取得できませんでした。クリックするとツールパネルを開きます。");
+
         item.Header = "セリフから表情を推定して適用";
-        item.IsEnabled = enabled;
-        item.ToolTip = enabled
-            ? "選択中のボイスアイテムを推定し、そのまま書き込みます。Ctrl+Z 1回で戻せます。"
-            : "動く立ち絵のボイスアイテムを選択してください。";
+
+        // タイムラインを掘り出せなかったときは押せるままにする。押せばパネルを開く導線に落ちる。
+        item.IsEnabled = canRun || viewModel is null;
+        item.ToolTip = canRun
+            ? $"{reason} Ctrl+Z 1回で戻せます。"
+            : reason;
+
+        if (!canRun)
+            FaceAssignLog.Write($"メニューを無効にしました: {reason}");
     }
 
     /// <summary>
