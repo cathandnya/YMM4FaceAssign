@@ -30,10 +30,17 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         if (candidates.Count == 0)
             throw new InvalidOperationException("候補のプリセットがありません。");
 
-        var schema = FaceAssignRequestBuilder.BuildSchema(candidates, endpoint.IncludeReason);
         var system = FaceAssignRequestBuilder.BuildSystemPrompt(candidates, policy, endpoint.AppendNoThinkHint, endpoint.IncludeReason);
 
         var chunks = Chunk(transcript, maxTargetsPerChunk, contextLines);
+
+        // 本番の前に小さなリクエストを1本通して、モデルのロードを済ませておく。
+        // これをやらないと最初の束がロード待ちのままタイムアウトし、リトライも同じく待たされる。
+        // 実測では、冷えた状態の最初の束が 255 秒、暖まっていれば 3.9 秒だった。
+        progress?.Report(new FaceAssignProgress(0, chunks.Count, "モデルを準備しています…"));
+        if (!await client.WarmUpAsync(ct).ConfigureAwait(false))
+            progress?.Report(new FaceAssignProgress(0, chunks.Count, "モデルの準備に失敗しました。そのまま続けます…"));
+
         var perChunk = new IReadOnlyList<FaceAssignOutcome>[chunks.Count];
         var done = 0;
 
@@ -45,7 +52,7 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
             await gate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                perChunk[index] = await ProcessChunkAsync(chunk, system, schema, candidates, progress, chunks.Count, ct)
+                perChunk[index] = await ProcessChunkAsync(chunk, system, candidates, progress, chunks.Count, ct)
                     .ConfigureAwait(false);
             }
             finally
@@ -68,7 +75,6 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
     private async Task<IReadOnlyList<FaceAssignOutcome>> ProcessChunkAsync(
         IReadOnlyList<TranscriptLine> chunk,
         string system,
-        JsonObject schema,
         IReadOnlyList<PresetCandidate> candidates,
         IProgress<FaceAssignProgress>? progress,
         int totalChunks,
@@ -78,6 +84,7 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
 
         var targetIds = chunk.Where(l => l.Id is not null).Select(l => l.Id!.Value).ToArray();
         var user = FaceAssignRequestBuilder.BuildUserPrompt(chunk);
+        var schema = FaceAssignRequestBuilder.BuildSchema(candidates, endpoint.IncludeReason, targetIds.Length);
 
         JsonNode? json = null;
         string? failure = null;
@@ -125,8 +132,9 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
 
         try
         {
+            var retrySchema = FaceAssignRequestBuilder.BuildSchema(candidates, endpoint.IncludeReason, missing.Count);
             var retryJson = await client
-                .CompleteJsonAsync(system, FaceAssignRequestBuilder.BuildUserPrompt(retryLines), schema, "face_assignments", ct)
+                .CompleteJsonAsync(system, FaceAssignRequestBuilder.BuildUserPrompt(retryLines), retrySchema, "face_assignments", ct)
                 .ConfigureAwait(false);
 
             var retried = Interpret(retryJson, null, [.. missing], candidates)
@@ -224,12 +232,20 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
         }
     }
 
+    /// <summary>対象どうしがこれ以上離れていたら、別のリクエストに分ける。</summary>
+    private const int SplitGap = 12;
+
+    /// <summary>対象と対象の間に残す他キャラのセリフの数。</summary>
+    private const int BridgeLines = 1;
+
     /// <summary>
     /// 対象行を maxTargets 件ずつに束ね、その束の先頭から contextLines 行だけ手前を文脈として足す。
     ///
-    /// 対象と対象の間にある他キャラのセリフは文脈として残すが、束の外までは遡らない。
-    /// ここを絞らないと、1行だけ選んだときにその手前の全セリフを送ってしまい、
-    /// 1行の推定が数十秒かかる (実測 49.8 秒)。
+    /// 対象と対象の間にある他キャラのセリフは、直前の BridgeLines 行だけ残す。
+    /// 全部入れると、交互に喋るタイムラインで 12行の束が 38行に膨らんで遅くなる (実測)。
+    ///
+    /// 束を分ける判断は contextLines とは切り離してある。両方を兼ねていたころは、
+    /// 文脈を 2 に減らすと 3行おきの話者が全部別リクエストになり 24回投げていた。
     /// </summary>
     internal static IReadOnlyList<IReadOnlyList<TranscriptLine>> Chunk(
         IReadOnlyList<TranscriptLine> transcript,
@@ -246,12 +262,11 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
                 targetIndices.Add(i);
         }
 
-        // 対象が離れていたら束を分ける。間の行はどちらの文脈でもないので送る意味がない。
         var groups = new List<List<int>>();
         foreach (var index in targetIndices)
         {
             var last = groups.Count > 0 ? groups[^1] : null;
-            var tooFar = last is not null && index - last[^1] > Math.Max(1, contextLines);
+            var tooFar = last is not null && index - last[^1] > SplitGap;
 
             if (last is null || tooFar || last.Count >= maxTargets)
                 groups.Add([index]);
@@ -263,16 +278,22 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
 
         foreach (var group in groups)
         {
+            var lines = new List<TranscriptLine>();
             var first = group[0];
-            var last = group[^1];
-            var start = Math.Max(0, first - contextLines);
 
-            var lines = new List<TranscriptLine>(last - start + 1);
-            for (var i = start; i <= last; i++)
+            // 束の手前の文脈。前の束の対象が紛れ込むことがあるので ID を落とす。
+            for (var i = Math.Max(0, first - contextLines); i < first; i++)
+                lines.Add(transcript[i] with { Id = null });
+
+            var previous = first - 1;
+            foreach (var index in group)
             {
-                // 先頭の文脈部分に前の束の対象が紛れ込むことがあるので、ID を落としておく。
-                var line = transcript[i];
-                lines.Add(i < first && line.Id is not null ? line with { Id = null } : line);
+                // 直前の対象との間は、対象に近い側だけ残す。
+                for (var i = Math.Max(previous + 1, index - BridgeLines); i < index; i++)
+                    lines.Add(transcript[i] with { Id = null });
+
+                lines.Add(transcript[index]);
+                previous = index;
             }
 
             chunks.Add(lines);
@@ -280,4 +301,5 @@ public sealed class FaceAssignRunner(OpenAiCompatibleClient client, LlmEndpoint 
 
         return chunks;
     }
+
 }

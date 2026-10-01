@@ -44,7 +44,8 @@ public sealed partial class OpenAiCompatibleClient : IDisposable
     /// LM Studio は待機中にモデルを降ろすので、初回が10秒以上かかることがある。
     /// 失敗しても何もしない。
     /// </summary>
-    public async Task WarmUpAsync(CancellationToken ct)
+    /// <returns>モデルが応答できる状態になったか。</returns>
+    public async Task<bool> WarmUpAsync(CancellationToken ct)
     {
         var request = new JsonObject
         {
@@ -59,10 +60,16 @@ public sealed partial class OpenAiCompatibleClient : IDisposable
             using var content = new ByteArrayContent(Encoding.UTF8.GetBytes(request.ToJsonString()));
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
             using var response = await http.PostAsync(endpoint.ResolveChatCompletionsUrl(), content, ct).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
         }
-        catch
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // 暖機は成功しなくても構わない。
+            throw;
+        }
+        catch (Exception)
+        {
+            // 暖機の失敗自体は致命ではない。呼び出し側が知らせる。
+            return false;
         }
     }
 

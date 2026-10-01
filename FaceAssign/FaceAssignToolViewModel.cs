@@ -321,6 +321,7 @@ public class FaceAssignToolViewModel : Bindable, IToolViewModel, ITimelineToolVi
             var endpoint = Settings.CreateEndpoint() with { TimeoutSeconds = 60 };
             using var client = new OpenAiCompatibleClient(endpoint);
             await client.WarmUpAsync(CancellationToken.None);
+
         }
         catch
         {

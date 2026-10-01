@@ -15,7 +15,12 @@ public static class FaceAssignRequestBuilder
     /// <summary>「どのプリセットも合わない」を表す番号。</summary>
     public const int KeepIndex = -1;
 
-    public static JsonObject BuildSchema(IReadOnlyList<PresetCandidate> candidates, bool includeReason = true)
+    /// <param name="itemCount">
+    /// そのリクエストの対象行数。いまは使っていない。
+    /// minItems/maxItems で配列長を固定したところ、返ってくる件数がむしろ減ったので外した
+    /// (24行が12行しか決まらなくなった)。
+    /// </param>
+    public static JsonObject BuildSchema(IReadOnlyList<PresetCandidate> candidates, bool includeReason, int itemCount)
     {
         var presetEnum = new JsonArray { KeepIndex };
         for (var i = 0; i < candidates.Count; i++)

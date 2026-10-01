@@ -10,7 +10,6 @@
     <Compile Include="..\..\FaceAssign\Tachie\TachiePartTables.cs" Link="Tachie\TachiePartTables.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\PresetDefinition.cs" Link="Tachie\PresetDefinition.cs" />
     <Compile Include="..\..\FaceAssign\Tachie\PresetIniReader.cs" Link="Tachie\PresetIniReader.cs" />
-    <Compile Include="..\..\FaceAssign\Tachie\RecommendedPresetNames.cs" Link="Tachie\RecommendedPresetNames.cs" />
     <Compile Include="..\..\FaceAssign\Llm\LlmModels.cs" Link="Llm\LlmModels.cs" />
     <Compile Include="..\..\FaceAssign\Llm\FaceAssignRequestBuilder.cs" Link="Llm\FaceAssignRequestBuilder.cs" />
     <Compile Include="..\..\FaceAssign\Llm\OpenAiCompatibleClient.cs" Link="Llm\OpenAiCompatibleClient.cs" />

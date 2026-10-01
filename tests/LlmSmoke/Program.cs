@@ -250,6 +250,96 @@ else if (mode == "url")
     }
     Console.WriteLine(failures == 0 ? "すべて PASS" : $"{failures} 件 FAIL");
 }
+else if (mode == "mixed")
+{
+    // 実際の使われ方: 2キャラが交互に喋るタイムラインを全選択した状態。
+    // 対象はキャラごとに分けるので、間に挟まる相手のセリフが文脈として混ざる。
+    var timeline = new List<TranscriptLine>();
+    for (var i = 0; i < 71; i++)
+        timeline.Add(new TranscriptLine(null, i % 3 == 0 ? "四国めたん" : "ずんだもん", Script.Lines[i % Script.Lines.Length].Serif));
+
+    foreach (var who in new[] { "四国めたん", "ずんだもん" })
+    {
+        var id = 1;
+        var forChar = timeline
+            .Select(l => l.CharacterName == who ? l with { Id = id++ } : l with { Id = null })
+            .ToArray();
+
+        var targets = forChar.Count(l => l.Id is not null);
+        foreach (var ctx in new[] { 4, 2, 0 })
+        {
+            var chunks = FaceAssignRunner.Chunk(forChar, 12, ctx);
+            var total = chunks.Sum(c => c.Count);
+            var biggest = chunks.Max(c => c.Count);
+            Console.WriteLine($"{who,-8} 対象{targets,3}行  文脈{ctx}  チャンク{chunks.Count,2}個  送信計{total,4}行  最大{biggest,3}行");
+        }
+    }
+}
+else if (mode == "mixedrun")
+{
+    // 2キャラ交互の71行タイムラインを全選択した場合の所要時間。
+    var candidates = presets.Select(p => new PresetCandidate(p.Label)).ToArray();
+
+    var timeline = new List<TranscriptLine>();
+    for (var i = 0; i < 71; i++)
+        timeline.Add(new TranscriptLine(null, i % 3 == 0 ? "四国めたん" : "ずんだもん", Script.Lines[i % Script.Lines.Length].Serif));
+
+    foreach (var (name, baseEndpoint) in endpoints)
+    {
+        var endpoint = baseEndpoint with { IncludeReason = false };
+        using var client = new OpenAiCompatibleClient(endpoint);
+        var runner = new FaceAssignRunner(client, endpoint);
+
+        await runner.RunAsync(timeline.Take(3).Select((l, i) => l with { Id = i + 1 }).ToArray(),
+            candidates, null, 12, 4, null, CancellationToken.None, 2);
+
+        var total = Stopwatch.StartNew();
+        var done = 0;
+        foreach (var who in new[] { "四国めたん", "ずんだもん" })
+        {
+            var id = 1;
+            var forChar = timeline.Select(l => l.CharacterName == who ? l with { Id = id++ } : l with { Id = null }).ToArray();
+            var sw = Stopwatch.StartNew();
+            var outcomes = await runner.RunAsync(forChar, candidates, null, 12, 4, null, CancellationToken.None, 2);
+            sw.Stop();
+            done += outcomes.Count(o => o.PresetLabel is not null);
+            Console.WriteLine($"  {who,-8} {outcomes.Count,2}行  {sw.ElapsedMilliseconds,6} ms  決定 {outcomes.Count(o => o.PresetLabel is not null)}");
+        }
+        total.Stop();
+        Console.WriteLine($"### {name}  合計 {total.ElapsedMilliseconds} ms  決定 {done}/71  ({total.ElapsedMilliseconds / 71.0:F0} ms/行)");
+        Console.WriteLine();
+    }
+}
+else if (mode == "chunktime")
+{
+    // 束ごとに1本ずつ投げて、どれが遅いのか見る。
+    var candidates = presets.Select(p => new PresetCandidate(p.Label)).ToArray();
+    var timeline = new List<TranscriptLine>();
+    for (var i = 0; i < 71; i++)
+        timeline.Add(new TranscriptLine(null, i % 3 == 0 ? "四国めたん" : "ずんだもん", Script.Lines[i % Script.Lines.Length].Serif));
+
+    var id = 1;
+    var forChar = timeline.Select(l => l.CharacterName == "ずんだもん" ? l with { Id = id++ } : l with { Id = null }).ToArray();
+    var chunks = FaceAssignRunner.Chunk(forChar, 12, 4);
+    Console.WriteLine($"ずんだもん: {chunks.Count} 束");
+
+    var (name, baseEndpoint) = endpoints[0];
+    var endpoint = baseEndpoint with { IncludeReason = false };
+    using var client = new OpenAiCompatibleClient(endpoint);
+    var runner = new FaceAssignRunner(client, endpoint);
+
+    for (var i = 0; i < chunks.Count; i++)
+    {
+        var chunk = chunks[i];
+        var targets = chunk.Count(l => l.Id is not null);
+        var sw = Stopwatch.StartNew();
+        var outcomes = await runner.RunAsync(chunk, candidates, null, 99, 0, null, CancellationToken.None, 1);
+        sw.Stop();
+        var decided = outcomes.Count(o => o.PresetLabel is not null);
+        var warn = outcomes.Select(o => o.Warning).OfType<string>().FirstOrDefault();
+        Console.WriteLine($"  束{i + 1}: {chunk.Count,2}行 (対象{targets,2})  {sw.ElapsedMilliseconds,7} ms  決定 {decided}/{targets}  {warn}");
+    }
+}
 else if (mode == "scale")
 {
     // 24行 / チャンク20 で2分割させ、ID の取りこぼしと重複を見る。
