@@ -21,10 +21,10 @@
 
 ## インストール
 
-ビルド済みの DLL はリポジトリには含めていません (`bin/` は git 管理外)。
-公開時に Releases へ `.ymme` を用意します。それまでは自分でビルドしてください ([開発](#開発) を参照)。
+[Releases](https://github.com/cathandnya/YMM4FaceAssign/releases/latest) から `FaceAssign-v*.ymme` をダウンロードし、ダブルクリックします。
+YMM4 を再起動すると読み込まれます。
 
-ビルドすると `YMM4フォルダ\user\plugin\FaceAssign\` へ自動でコピーされます。
+自分でビルドした場合は `YMM4フォルダ\user\plugin\FaceAssign\` へ自動でコピーされます ([開発](#開発) を参照)。
 手動で入れる場合は `FaceAssign.dll` をそのフォルダに置いて YMM4 を再起動します。
 そのフォルダにはプラグインの DLL 以外を置かないでください (依存 DLL を一緒に置くと読み込みに失敗します)。
 
