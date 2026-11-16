@@ -194,3 +194,12 @@ dotnet build FaceAssign/FaceAssign.csproj
 | `tests/PresetIniTests/` | `preset.ini` パーサと書き込みロジックの検証 (ネットワーク不要) |
 | `tests/LlmSmoke/` | 実サーバに対する速度・精度の計測 |
 | `tools/ApiProbe/` | YMM4 アセンブリの型・メンバを調べるプローブ |
+
+## ライセンス
+
+[MIT License](LICENSE) です。
+
+- YMM4 本体の DLL (`YukkuriMovieMaker*.dll` など) はリポジトリにも配布物にも含めていません。ビルド時はインストール済みの YMM4 から参照します
+- 本プラグインは有志による非公式のものです。YMM4 の開発者へは問い合わせないでください
+- 使用によって生じた損害について、作者は責任を負いません
+- クラウドの LLM を使う場合は、そのサービスの利用規約に従ってください
